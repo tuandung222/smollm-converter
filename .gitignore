@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Large Model weights & checkpoints (reproducible via download_model.py & run_all.py)
+models/
+*.gguf
+*.tflite
+*.npz
+*.safetensors
+*.bin
+
+# Logs & temp
+*.log
+.DS_Store
+.cache/
