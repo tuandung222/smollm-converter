@@ -27,8 +27,9 @@ All models were evaluated against the Hugging Face PyTorch ground truth using th
 | Runtime | Format | Artifact Size | Cosine Similarity | Max Abs Error | Inference Speed | Generation Quality |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **PyTorch (Ref)** | In-Repo (`torch_impl/`) | ~270 MB | `1.00000000` (Baseline) | $0.0$ | **64.9 t/s** | Coherent, fluent |
-| **Llama.cpp** | `smollm2_135m_f16.gguf`<br>`smollm2_135m_q8_0.gguf` | 313 MB (F16)<br>**167 MB** (Q8_0) | `1.00000000` | $< 1.5 \times 10^{-4}$ | **178.3 t/s** (CPU) | Coherent, fluent |
+| **Pure C (Zero-dep)**| `smollm2_135m_raw.bin` | 621 MB | `1.00000000` | $< 1.0 \times 10^{-4}$ | **8.5 t/s** (Single-thread C) | Coherent, fluent |
 | **Pure JAX** | `smollm2_135m_jax.npz` | 291 MB | `1.00000000` | $1.299 \times 10^{-4}$ | **38.5 t/s** (~20ms/tok) | Coherent, fluent |
+| **Llama.cpp** | `smollm2_135m_f16.gguf`<br>`smollm2_135m_q8_0.gguf` | 313 MB (F16)<br>**167 MB** (Q8_0) | `1.00000000` | $< 1.5 \times 10^{-4}$ | **178.3 t/s** (CPU Metal) | Coherent, fluent |
 | **Google LiteRT** | `smollm2_135m.tflite` | 514 MB | `1.00000000` | $1.301 \times 10^{-4}$ | Real-time on-device | Coherent, fluent |
 
 ---
@@ -42,6 +43,10 @@ smollm_converter/
 │   ├── configuration_llama.py  # LlamaConfig definition
 │   ├── modeling_llama.py       # Full LlamaForCausalLM architecture
 │   └── infer_torch.py          # Standalone PyTorch text generator
+├── c_scratch/                  # Pure C Inference Engine (Zero libraries, pure C99)
+│   ├── smollm.c                # Full C implementation of Llama (RMSNorm, RoPE, GQA, SwiGLU, KV-Cache)
+│   ├── export_to_c.py          # Exports PyTorch weights to raw binary format
+│   └── infer_c.py              # CLI text generation wrapper for C binary
 ├── gguf_scratch/               # Target 1: Llama.cpp GGUF from scratch
 │   ├── gguf_writer.py          # Standalone GGUF v3 Binary Writer & Q8_0 Quantizer
 │   ├── convert_smollm_gguf.py  # Weight mapping, RoPE permutation, & metadata builder
@@ -130,6 +135,18 @@ python litert_scratch/infer_litert.py "The future of science is"
 #### Target 4: PyTorch In-Repo Reference
 ```bash
 python torch_impl/infer_torch.py "Artificial Intelligence is transforming the world because"
+```
+
+#### Target 5: Pure C Inference Engine (Zero Frameworks / Libraries)
+```bash
+# Export weights to raw binary format
+python c_scratch/export_to_c.py
+
+# Compile pure C engine with Apple clang
+clang -O3 -o c_scratch/smollm c_scratch/smollm.c -lm
+
+# Run text generation directly in terminal
+python c_scratch/infer_c.py "The theory of relativity explains that" 25
 ```
 
 #### Run All Targets Automatically

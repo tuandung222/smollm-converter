@@ -19,7 +19,6 @@ models/
 *.safetensors
 *.bin
 
-# Logs & temp
-*.log
-.DS_Store
-.cache/
+# Compiled binaries
+c_scratch/smollm
+smollm
